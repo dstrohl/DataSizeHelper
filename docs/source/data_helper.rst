@@ -1,0 +1,55 @@
+Data Size Helper
+================
+
+The key object in the package is the DataSizeHelper object.
+
+This is probably best described with examples:
+
+Parsing and normalizing user entered data:
+
+    >>> dsh = DataSizeHelper('1 gig/sec')
+
+    >>> dsh.value
+    1
+    >>> dsh.unit
+    'Gb'
+    >>> dsh.suffix
+    '/s'
+
+Converting the data to other units:
+
+    >>> dsh = DataSizeHelper()
+    >>> dsh.MB = 100
+
+    >>> dsh.GB
+    0.1
+
+    >>> dsh.KB
+    100000
+
+Providing size aware math services:
+
+    >>> app1_size = DataSizeHelper('1500 MB')
+    >>> app2_size = DataSizeHelper('500 MB')
+    >>> app3_size = DataSizeHelper('1000 KB')
+    >>> hdd_size = DataSizeHelper('1 TB')
+
+    >>> all_apps = app1_size + app2_size + (app3_size * 5)
+    >>> all_apps
+    '2500 MB'
+
+    >>> hdd_size > all_apps
+    False
+
+    >>> needed_space = all_apps - hdd_size
+
+    >>> needed_space.MB
+    '1500 MB'
+
+Providing clean strings for user interaction:
+
+    >>> 'The hard drive requires an additional {:n+s} of storage'.format(needed_space)
+    'The hard drive requires an additional 1.5 terabytes of storage'
+    >>> 'This will take approximately {:Mb+s} seconds to transfer in a 100 Mb/s network connection'.format(needed_space)
+    'This will take approximately 200 seconds to transfer in a 100 Mb/s network connection'
+
