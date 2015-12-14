@@ -1,0 +1,235 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Data Size Calculator &mdash; Data Size Helper 0.9 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Data Size Helper 0.9 documentation" href="index.html"/>
+        <link rel="next" title="Data Unit Manager" href="data_unit_manager.html"/>
+        <link rel="prev" title="Data Size Helper" href="data_helper.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> Data Size Helper
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="data_helper.html">Data Size Helper</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Data Size Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_unit_manager.html">Data Unit Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_size_helper_formatting.html">Data Size Helper String Formatting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Unitsets</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Data Size Helper</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Data Size Calculator</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/data_size_calculator.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="data-size-calculator">
+<h1>Data Size Calculator<a class="headerlink" href="#data-size-calculator" title="Permalink to this headline">¶</a></h1>
+<p>This object handles converting between one unit to another unit.</p>
+<dl class="docutils">
+<dt>Notes:</dt>
+<dd><ul class="first last simple">
+<li>All numbers entered will be converted to decimals and all return values are of type <a class="reference external" href="https://docs.python.org/library/decimal.html#decimal.Decimal" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">decimal.Decimal</span></code></a></li>
+<li>Unit names passed must be correct standard abbreviations for the units, (use the <code class="xref py py-class docutils literal"><span class="pre">DataUnitManager</span></code> to normalize
+and validate unit names if needed).</li>
+</ul>
+</dd>
+</dl>
+<dl class="class">
+<dt id="data_size_helper.DataSizeHelper">
+<em class="property">class </em><code class="descclassname">data_size_helper.</code><code class="descname">DataSizeHelper</code><span class="sig-paren">(</span><em>value=0</em>, <em>unit=None</em>, <em>suffix=None</em>, <em>default_unit=None</em>, <em>storage_unit='b'</em>, <em>unitset=None</em>, <em>unit_manager=None</em>, <em>calculator=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/data_size_helper.html#DataSizeHelper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#data_size_helper.DataSizeHelper" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>value</strong> &#8211; The value of the object</li>
+<li><strong>unit</strong> &#8211; The unit for the object</li>
+<li><strong>suffix</strong> &#8211; Any suffix (&#8216;/s&#8217; for example)</li>
+<li><strong>default_unit</strong> &#8211; If just a number is passed, what unit do we assume it is</li>
+<li><strong>storage_unit</strong> &#8211; Normally everything is stored in bits, however when working with very large numbers
+it may be easier to store data in a different unit.  if all units will be the same, this may reduce
+calculation time as well.</li>
+<li><strong>unitset</strong> &#8211; the unitset may need to be passed if normalization is required and the system cannot
+automatically determine it.  (primarily if working with &#8216;B&#8217; or &#8216;b&#8217;).</li>
+<li><strong>unit_manager</strong> &#8211; if desired, allows overriding the unit manager which handles unit name detection and
+normalization</li>
+<li><strong>calculator</strong> &#8211; If desired, allows overriding the unit calculator which handles converting between units.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>Examples (note, returns are shown as literal int or float, however are actually of type Decimal).:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">DataSizeHelper</span> <span class="kn">import</span> <span class="n">data_size_calculator</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dsc</span> <span class="o">=</span> <span class="n">data_size_calculator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dsc</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="s">&#39;Kb&#39;</span><span class="p">,</span> <span class="s">&#39;Mb&#39;</span><span class="p">)</span>
+<span class="go">(1, &#39;Mb&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dsc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">,</span> <span class="s">&#39;Kib&#39;</span><span class="p">)</span>
+<span class="go">(1024, &#39;Kib&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data_size_calculator</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="s">&#39;Mb&#39;</span><span class="p">,</span> <span class="n">dsc</span><span class="o">.</span><span class="n">DEC_BIT</span><span class="p">)</span>
+<span class="go">(1, &#39;Gb&#39;)</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="data_unit_manager.html" class="btn btn-neutral float-right" title="Data Unit Manager" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="data_helper.html" class="btn btn-neutral" title="Data Size Helper" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Dan Strohl.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.9',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

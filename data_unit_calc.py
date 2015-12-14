@@ -402,6 +402,11 @@ data_units = DataUnitManager(
 
 
 class DataSizeCalculator(object):
+    DEC_BYT = DEC_BYT
+    DEC_BIT = DEC_BIT
+    BIN_BIT = BIN_BIT
+    BIN_BYT = BIN_BYT
+
     def __init__(self):
         self._base_units = {}
 
@@ -459,16 +464,17 @@ class DataSizeCalculator(object):
 
     def __call__(self, value, unit, return_as):
         """
-        Converts and normalizes between unitsets.
+        Converts between units and normalizes within a unitset.
 
         :param value: A numeric value (can be a string, int, float, or decimal, as long as it can be converted to a
             Decimal)
         :param str unit: A string indicating what type if unit this is currently.  The unit must be a standard
             short-name or an AttributeError will be raised.
-        :param str return_as: A string indicating what to convert the unit to, if a unit string is passed, this will
-            convert the value to that unit.  if a unitset string is passed, this will normalize within that unit.
+        :param str return_as: A string indicating what to convert the unit to, if a unit string ('Mb', 'MB', Kib',
+            etc...) is passed, this will convert the value to that unit.  if a unitset string is passed, this will
+            normalize within that unit.
         :return: This returns a tuple in the format of:
-            (Decimal(value), 'unit short name')
+            (Decimal('value'), 'unit short name')
         """
         value = Decimal(value)
 

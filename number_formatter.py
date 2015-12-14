@@ -3,70 +3,8 @@ import locale
 locale.setlocale(locale.LC_ALL, '')
 
 """
-
-Custom Format Syntax:
-{...:custom_format_spec}
-
-Same as standard except for the [type] field, which is as follows:
-    (separate keys with ':')
-
-normalize to unitset keys:
-    ("+" = use long names)
-    bb = binary_byte
-    bt = binary_bit
-    db = decimal_byte
-    dt = decimal_bit
-    None = do not normalize
-    n = normalize to default unitset
-
-force to unit keys:
-    use short names such as Mb, KiB, etc)
-    None = use defined units
-    "+" indicates to use long names
-
-    if short names are used, long names can be identified by also passing a "D".
-
-include suffix (if present):
-    s = do not include suffix
-    S = include suffix (default)
-
-Pluralize (if needed for long names):
-    l = do not pluralize
-    L = pluralize (default)
-
-Case (only for long names):
-    c = lower
-    C = proper (default)
-
-examples:
-
-initial value   format spec     final value
-10 GB/s,        {:4.2:MB+} "10000.00 Megabytes/s"
-10 GB/s,        {:<6:bb:S}         "10     Gb/s"
-1 Kb/s,        {:bb:s:}         "0.195 Kb"
-10 Gb/s,        {:+:c:l}        '10 gigabyte/s"
-
-
-unit = the currently set unit for reporting.
-
+Helper function  (and associated classes) for formatting decimal numbers into strings.
 """
-
-
-def split_numbers(str_in, from_right=False, include=''):
-    ret_str = list(str_in[:])
-    if not from_right:
-        ret_str.reverse()
-    num_str = []
-
-    while ret_str and (ret_str[-1].isdigit() or ret_str[-1] in include):
-        num_str.append(ret_str.pop())
-
-    if from_right:
-        num_str.reverse()
-    else:
-        ret_str.reverse()
-
-    return ''.join(num_str), ''.join(ret_str)
 
 class GroupGenerator(object):
     def __init__(self, groupings, thousands_sep=','):
@@ -241,10 +179,6 @@ def text_number_formatter(value,
             align = format_spec[0]
             format_spec = format_spec[1:]
 
-
-
-        # align, fill_char = text_find_and_remove(format_spec, *'<>=^', inc_previous_char=True,
-        #                                         default=(align, fill_char), expected_pos=1)
         sign_type = text_find_and_remove(format_spec, *'+- ()', default=sign_type)
         alternate_form = text_find_and_remove(format_spec, '#', true_if_match=True)
         use_monentary_format = text_find_and_remove(format_spec, '$', true_if_match=True)
@@ -262,49 +196,6 @@ def text_number_formatter(value,
                 width = int(format_spec)
             except ValueError:
                 raise AttributeError('Invalid format spec, %s remaining after parsing' % format_spec)
-
-        '''
-        if format_spec[1] in '<>=^':
-            fill_char = format_spec[0]
-            align = format_spec[1]
-
-            format_spec = format_spec[2:]
-
-        if format_spec[0] in '+- ()':
-            sign_type = format_spec[0]
-            format_spec = format_spec[1:]
-
-        if format_spec[0] == '#':
-            alternate_form = True
-            format_spec = format_spec[1:]
-
-        if format_spec[0] == '0':
-            zero_padding = True
-            format_spec = format_spec[1:]
-
-        if format_spec[0].isdecimal():
-            width_str, format_spec = split_numbers(format_spec)
-            width = int(width_str)
-
-        if format_spec[0] == ',':
-            inc_thousands_sep = True
-            format_spec = format_spec[1:]
-
-        if format_spec[0] == '$':
-            use_monentary_format = True
-            format_spec = format_spec[1:]
-
-        if format_spec[0] == '*':
-            zero_padding_size, format_spec = split_numbers(format_spec)
-            zero_padding_size = int(zero_padding_size)
-
-        if format_spec[0] == '.':
-            precision, format_spec = split_numbers(format_spec)
-            if precision == '':
-                precision = 0
-            else:
-                precision = int(precision)
-        '''
 
     if not isinstance(value, Decimal):
         value = Decimal(value)
@@ -445,8 +336,6 @@ def text_number_formatter(value,
                 num_str.pre_val_sign = '+'+sign_space
             elif sign_type == ' ':
                 num_str.pre_val_sign = ' '+sign_space
-
-
 
     if width > 0:
         tmp_num_len = len(num_str)

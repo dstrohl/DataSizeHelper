@@ -1,0 +1,264 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Data Size Helper String Formatting &mdash; Data Size Helper 0.9 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Data Size Helper 0.9 documentation" href="index.html"/>
+        <link rel="next" title="Unitsets" href="concepts.html"/>
+        <link rel="prev" title="Data Unit Manager" href="data_unit_manager.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> Data Size Helper
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="data_helper.html">Data Size Helper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_size_calculator.html">Data Size Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_unit_manager.html">Data Unit Manager</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Data Size Helper String Formatting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Unitsets</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Data Size Helper</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Data Size Helper String Formatting</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/data_size_helper_formatting.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="data-size-helper-string-formatting">
+<h1>Data Size Helper String Formatting<a class="headerlink" href="#data-size-helper-string-formatting" title="Permalink to this headline">¶</a></h1>
+<p>Custom Format Syntax:
+{...:custom_format_spec}</p>
+<dl class="docutils">
+<dt>Same as standard except for the [type] field, which is as follows:</dt>
+<dd>(separate keys with &#8216;:&#8217;)</dd>
+<dt>normalize to unitset keys:</dt>
+<dd>(&#8220;+&#8221; = use long names)
+bb = binary_byte
+bt = binary_bit
+db = decimal_byte
+dt = decimal_bit
+None = do not normalize
+n = normalize to default unitset</dd>
+<dt>force to unit keys:</dt>
+<dd><p class="first">use short names such as Mb, KiB, etc)
+None = use defined units
+&#8220;+&#8221; indicates to use long names</p>
+<p class="last">if short names are used, long names can be identified by also passing a &#8220;D&#8221;.</p>
+</dd>
+<dt>include suffix (if present):</dt>
+<dd>s = do not include suffix
+S = include suffix (default)</dd>
+<dt>Pluralize (if needed for long names):</dt>
+<dd>l = do not pluralize
+L = pluralize (default)</dd>
+<dt>Case (only for long names):</dt>
+<dd>c = lower
+C = proper (default)</dd>
+</dl>
+<p>examples:</p>
+<p>initial value   format spec     final value
+10 GB/s,        {:4.2:MB+} &#8220;10000.00 Megabytes/s&#8221;
+10 GB/s,        {:&lt;6:bb:S}         &#8220;10     Gb/s&#8221;
+1 Kb/s,        {:bb:s:}         &#8220;0.195 Kb&#8221;
+10 Gb/s,        {:+:c:l}        &#8216;10 gigabyte/s&#8221;</p>
+<p>unit = the currently set unit for reporting.</p>
+<blockquote>
+<div><p>Custom Format Syntax (separate keys with &#8216;:&#8217;):</p>
+<blockquote>
+<div><p>[:unitset|:unit][+][:s|:S][:l|:L][:c|:C]</p>
+<dl class="docutils">
+<dt>Unitset or Unit:</dt>
+<dd>&#8216;bb&#8217;: normalize to binary byte
+&#8216;bt&#8217;: normalize to bin_bit
+&#8216;db&#8217;: normalize to dec_byte
+&#8216;dt&#8217;: normalize to dec_bit
+&#8216;n&#8217;: normalize to defined unitset (if defined)
+&lt;unit short name&gt;: force to unit short name
+&#8216;d&#8217;: use standard defined units
+None/Missing = do not normalize</dd>
+<dt>&#8216;+&#8217;:</dt>
+<dd>Forces the use of long names (such as megabyte instead of Mb).</dd>
+<dt>&#8216;s&#8217; or &#8216;S&#8217;:</dt>
+<dd>&#8216;s&#8217;: Do not include suffix
+&#8216;S&#8217;: Include suffix (&#8216;/s&#8217;) if defined [default]</dd>
+</dl>
+<p>The following are only used if long names are used.
+&#8216;l&#8217; or &#8216;L&#8217;:</p>
+<blockquote>
+<div>&#8216;l&#8217;: Do not pluralize.
+&#8216;L&#8217;: pluralize if long names are used [default]</div></blockquote>
+<dl class="docutils">
+<dt>&#8216;c&#8217; or &#8216;C&#8217;:</dt>
+<dd>&#8216;c&#8217;: Only use lower case
+&#8216;C&#8217;: Use proper case (&#8216;Megabyte&#8217;) [default]</dd>
+</dl>
+</div></blockquote>
+<p>examples (using &#8216;MB&#8217; unit):</p>
+<blockquote>
+<div><ul class="simple">
+<li>{:MB+} = &#8220;Megabytes/s&#8221;</li>
+<li>{:bb:S} &#8220;</li>
+<li>{:BB:s:}         &#8220;0.195 Kb&#8221;</li>
+<li>{:D:c:l}        &#8216;10 gigabyte/s&#8221;</li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="concepts.html" class="btn btn-neutral float-right" title="Unitsets" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="data_unit_manager.html" class="btn btn-neutral" title="Data Unit Manager" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Dan Strohl.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.9',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

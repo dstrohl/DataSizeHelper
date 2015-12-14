@@ -1,0 +1,798 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>data_size_helper &mdash; Data Size Helper 0.9 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Data Size Helper 0.9 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> Data Size Helper
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../data_helper.html">Data Size Helper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_size_calculator.html">Data Size Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_unit_manager.html">Data Unit Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_size_helper_formatting.html">Data Size Helper String Formatting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Data Size Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../concepts.html#unitsets">UNITSETS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../concepts.html#differences">Differences</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../concepts.html#references">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">Data Size Helper</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      
+    <li>data_size_helper</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <h1>Source code for data_size_helper</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">data_unit_calc</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">data_unit_lookups</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">data_base_units</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">number_formatter</span> <span class="kn">import</span> <span class="n">text_number_formatter</span>
+<span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">Decimal</span><span class="p">,</span> <span class="n">InvalidOperation</span>
+
+<span class="kn">import</span> <span class="nn">locale</span>
+<span class="n">locale</span><span class="o">.</span><span class="n">setlocale</span><span class="p">(</span><span class="n">locale</span><span class="o">.</span><span class="n">LC_ALL</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Provides an object that understands normal data units and can convert between them as needed.  In addition to the</span>
+<span class="sd">noted methods, you can also interact with this in the following ways:</span>
+
+<span class="sd">    * DataSizeHelper.&lt;data_unit_short_name&gt; = value</span>
+<span class="sd">    * value = DataSizeHelper.&lt;data_unit_short_name&gt;</span>
+<span class="sd">    * value = str(DataSizeHelper)</span>
+<span class="sd">    * DataSizeHelper + object</span>
+<span class="sd">    * DataSizeHelper += object</span>
+<span class="sd">    * DataSizeHelper &gt; object</span>
+<span class="sd">    * &#39;&lt;format definition&gt;&#39;.format(DataSizeHelper)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="DataSizeHelper"><a class="viewcode-back" href="../data_size_calculator.html#data_size_helper.DataSizeHelper">[docs]</a><span class="k">class</span> <span class="nc">DataSizeHelper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">_unit_manager</span> <span class="o">=</span> <span class="n">data_units</span>
+    <span class="n">_calculator</span> <span class="o">=</span> <span class="n">data_size_calculator</span>
+    <span class="n">_value</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">_unit</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_suffix</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_default_unit</span> <span class="o">=</span> <span class="s">&#39;B&#39;</span>
+    <span class="n">_storage_unit</span> <span class="o">=</span> <span class="s">&#39;b&#39;</span>
+    <span class="n">_unitset</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_str_format</span> <span class="o">=</span> <span class="s">&#39;d:s&#39;</span>
+    <span class="n">_aliases</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_base_units</span> <span class="o">=</span> <span class="s">&#39;b&#39;</span>
+    <span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_normalize_lookup_cache</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">unit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">suffix</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">default_unit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">storage_unit</span><span class="o">=</span><span class="s">&#39;b&#39;</span><span class="p">,</span>
+                 <span class="n">unitset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">unit_manager</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">calculator</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param value: The value of the object</span>
+<span class="sd">        :param unit: The unit for the object</span>
+<span class="sd">        :param suffix: Any suffix (&#39;/s&#39; for example)</span>
+<span class="sd">        :param default_unit: If just a number is passed, what unit do we assume it is</span>
+<span class="sd">        :param storage_unit: Normally everything is stored in bits, however when working with very large numbers</span>
+<span class="sd">            it may be easier to store data in a different unit.  if all units will be the same, this may reduce</span>
+<span class="sd">            calculation time as well.</span>
+<span class="sd">        :param unitset: the unitset may need to be passed if normalization is required and the system cannot</span>
+<span class="sd">            automatically determine it.  (primarily if working with &#39;B&#39; or &#39;b&#39;).</span>
+<span class="sd">        :param unit_manager: if desired, allows overriding the unit manager which handles unit name detection and</span>
+<span class="sd">            normalization</span>
+<span class="sd">        :param calculator:  If desired, allows overriding the unit calculator which handles converting between units.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unit_manager</span> <span class="o">=</span> <span class="n">unit_manager</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unit_manager</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculator</span> <span class="o">=</span> <span class="n">calculator</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_storage_unit</span> <span class="o">=</span> <span class="n">storage_unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">=</span> <span class="n">suffix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="n">unit</span> <span class="ow">or</span> <span class="n">default_unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aliases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unit_manager</span><span class="o">.</span><span class="n">aliases</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_unit</span> <span class="o">=</span> <span class="n">default_unit</span> <span class="ow">or</span> <span class="n">unit</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unitset</span> <span class="o">=</span> <span class="n">unitset</span>
+
+    <span class="c"># &lt;editor-fold desc=&quot; ********************* Properties ****************************************&quot;&gt;</span>
+
+    <span class="k">def</span> <span class="nf">_set_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_unit</span>
+        <span class="n">tmp_value</span><span class="p">,</span> <span class="n">tmp_unit</span><span class="p">,</span> <span class="n">tmp_suffix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">tmp_unit</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="n">tmp_unit</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">=</span> <span class="n">tmp_suffix</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">tmp_value</span><span class="p">,</span> <span class="n">from_unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">_get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">fset</span><span class="o">=</span><span class="n">_set_value</span><span class="p">,</span> <span class="n">fget</span><span class="o">=</span><span class="n">_get_value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_unit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">):</span>
+        <span class="n">unit</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fix_unit</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">=</span> <span class="n">suffix</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unit</span> <span class="o">=</span> <span class="n">unit</span>
+
+    <span class="k">def</span> <span class="nf">_get_unit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unit</span>
+
+    <span class="n">unit</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">fset</span><span class="o">=</span><span class="n">_set_unit</span><span class="p">,</span> <span class="n">fget</span><span class="o">=</span><span class="n">_get_unit</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_default_unit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">validate</span><span class="p">:</span>
+            <span class="n">unit</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fix_unit</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_unit</span> <span class="o">=</span> <span class="n">unit</span>
+
+    <span class="k">def</span> <span class="nf">_get_default_unit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_unit</span>
+
+    <span class="n">default_unit</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">fset</span><span class="o">=</span><span class="n">_set_default_unit</span><span class="p">,</span> <span class="n">fget</span><span class="o">=</span><span class="n">_get_default_unit</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_set_suffix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suffix</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_suffix</span> <span class="o">=</span> <span class="n">suffix</span>
+
+    <span class="k">def</span> <span class="nf">_get_suffix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_suffix</span>
+
+    <span class="n">suffix</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">fset</span><span class="o">=</span><span class="n">_set_suffix</span><span class="p">,</span> <span class="n">fget</span><span class="o">=</span><span class="n">_get_suffix</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">set_unitset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unitset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fix_unit</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">unitset</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_unitset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unit_info</span><span class="p">()</span><span class="o">.</span><span class="n">full_unitset</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unit_info</span><span class="p">()</span><span class="o">.</span><span class="n">unitset_match</span><span class="p">(</span><span class="n">unitset</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">fix_unit</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unit_info</span><span class="p">()</span><span class="o">.</span><span class="n">convert_unitset</span><span class="p">(</span><span class="n">unitset</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&#39;Default unit (</span><span class="si">%s</span><span class="s">) does not match unitset (</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">unitset</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_unitset</span> <span class="o">=</span> <span class="n">unitset</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">_get_unitset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unitset</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_unitset</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unitset</span>
+
+    <span class="k">def</span> <span class="nf">_set_unitset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unitset</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_unitset</span><span class="p">(</span><span class="n">unitset</span><span class="o">=</span><span class="n">unitset</span><span class="p">)</span>
+
+    <span class="n">unitset</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">fset</span><span class="o">=</span><span class="n">_set_unitset</span><span class="p">,</span> <span class="n">fget</span><span class="o">=</span><span class="n">_get_unitset</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fix_unit</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_seed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage_unit</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_seed_unit</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">_get_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage_unit</span>
+
+    <span class="n">storage_unit</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">fset</span><span class="o">=</span><span class="n">_set_storage</span><span class="p">,</span> <span class="n">fget</span><span class="o">=</span><span class="n">_get_storage</span><span class="p">)</span>
+
+    <span class="c"># &lt;/editor-fold&gt;</span>
+
+    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Allows setting of the value, unit, and suffix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="n">unit</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="n">unit</span>
+        <span class="k">if</span> <span class="n">suffix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">=</span> <span class="n">suffix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Allows requesting the value of the object in different units</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">unit</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fix_unit</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">to_unit</span><span class="o">=</span><span class="n">unit</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_normalized</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unitset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">set_unit</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a normalized unit and value, for example:</span>
+
+<span class="sd">            &gt;&gt;&gt; ds = DataSizeHelper(&#39;1000 Gb&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; ds.get_normalized()</span>
+<span class="sd">            (1, &#39;Tb&#39;)</span>
+
+<span class="sd">        Can also set its own unit to the normalized unit if requested.</span>
+<span class="sd">        :param unitset: Normalization requires the unitset to be know.  if this cannot be automatically detected, it</span>
+<span class="sd">        must be passed.</span>
+<span class="sd">        :param silent: If False, If the unitset is not passed or set, and it cannot be detected, an AttributeError will</span>
+<span class="sd">        be raised, if True, the normal value and unit will be returned un-normalized.</span>
+<span class="sd">        :param set_unit: If True, the normalization process will reset the unit to the normalized unit.</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">unitset</span> <span class="o">=</span> <span class="n">unitset</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">unitset</span>
+        <span class="k">if</span> <span class="n">unitset</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">silent</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&#39;Normalization requires a unitset to be defined.&#39;</span><span class="p">)</span>
+
+        <span class="n">value</span><span class="p">,</span> <span class="n">unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">,</span> <span class="n">return_as</span><span class="o">=</span><span class="n">unitset</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">set_unit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="n">unit</span>
+
+        <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+
+    <span class="k">def</span> <span class="nf">_unit_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">unit</span> <span class="o">=</span> <span class="n">unit</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unit_manager</span><span class="p">[</span><span class="n">unit</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_fix_unit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">tmp_value</span><span class="p">,</span> <span class="n">tmp_unit</span><span class="p">,</span> <span class="n">tmp_suffix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unit_manager</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">default_unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">default_suffix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">suffix</span><span class="p">,</span> <span class="n">unit_only</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tmp_unit</span><span class="p">,</span> <span class="n">tmp_suffix</span>
+
+    <span class="k">def</span> <span class="nf">_convert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">from_unit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">to_unit</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">from_unit</span> <span class="o">=</span> <span class="n">from_unit</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage_unit</span>
+        <span class="n">to_unit</span> <span class="o">=</span> <span class="n">to_unit</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage_unit</span>
+
+        <span class="k">if</span> <span class="n">from_unit</span> <span class="o">==</span> <span class="n">to_unit</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span>
+
+        <span class="n">tmp_val</span><span class="p">,</span> <span class="n">tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculator</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">from_unit</span><span class="p">,</span> <span class="n">to_unit</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tmp_val</span>
+
+    <span class="k">def</span> <span class="nf">_parse_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">unit</span> <span class="o">=</span> <span class="n">unit</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unit_manager</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">default_unit</span><span class="o">=</span><span class="n">unit</span><span class="p">,</span> <span class="n">default_suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__format__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">format_spec</span><span class="p">):</span>
+
+        <span class="n">format_args</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">format_keys</span> <span class="o">=</span> <span class="n">format_spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">)</span>
+
+        <span class="n">normalize_keys</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">bb</span><span class="o">=</span><span class="n">BIN_BIT</span><span class="p">,</span>
+            <span class="n">by</span><span class="o">=</span><span class="n">BIN_BYT</span><span class="p">,</span>
+            <span class="n">db</span><span class="o">=</span><span class="n">DEC_BIT</span><span class="p">,</span>
+            <span class="n">dy</span><span class="o">=</span><span class="n">DEC_BYT</span><span class="p">,</span>
+            <span class="n">n</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">unitset</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">format_keys</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span> <span class="o">==</span> <span class="s">&#39;+&#39;</span><span class="p">:</span>
+                <span class="n">format_args</span><span class="p">[</span><span class="s">&#39;proper_case&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;bb&#39;</span><span class="p">,</span> <span class="s">&#39;by&#39;</span><span class="p">,</span> <span class="s">&#39;db&#39;</span><span class="p">,</span> <span class="s">&#39;dy&#39;</span><span class="p">,</span> <span class="s">&#39;n&#39;</span><span class="p">]:</span>
+                <span class="n">format_args</span><span class="p">[</span><span class="s">&#39;normalize_to_unitset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">normalize_keys</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">base_data_units</span><span class="o">.</span><span class="n">_base_units</span><span class="p">:</span>
+                <span class="n">format_args</span><span class="p">[</span><span class="s">&#39;force_to_unit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;S&#39;</span><span class="p">,</span> <span class="s">&#39;s&#39;</span><span class="p">]:</span>
+                <span class="n">format_args</span><span class="p">[</span><span class="s">&#39;include_suffix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;S&#39;</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;l&#39;</span><span class="p">:</span>
+                <span class="n">format_args</span><span class="p">[</span><span class="s">&#39;pluralize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;C&#39;</span><span class="p">,</span> <span class="s">&#39;c&#39;</span><span class="p">]:</span>
+                <span class="n">format_args</span><span class="p">[</span><span class="s">&#39;proper_case&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;C&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s">&#39;number_format&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">format_args</span><span class="p">:</span>
+                    <span class="n">format_args</span><span class="p">[</span><span class="s">&#39;number_format&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_str</span><span class="p">(</span><span class="o">**</span><span class="n">format_args</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_to_unit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">normalize_to_unitset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">pluralize</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">proper_case</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                <span class="n">long_name</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">include_suffix</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">number_format</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="n">name_format_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">long_name</span><span class="p">:</span>
+            <span class="n">name_format_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">proper_case</span><span class="p">:</span>
+            <span class="n">name_format_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;C&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">number_format</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">num_key</span> <span class="o">=</span> <span class="s">&#39;{}&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">num_key</span> <span class="o">=</span> <span class="s">&#39;{:&#39;</span><span class="o">+</span><span class="n">number_format</span><span class="o">+</span><span class="s">&#39;}&#39;</span>
+
+        <span class="k">if</span> <span class="n">normalize_to_unitset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">force_to_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&#39;Normalize and force flags cannot be used together&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">normalize_to_unitset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">tmp_value</span><span class="p">,</span> <span class="n">tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_normalized</span><span class="p">(</span><span class="n">normalize_to_unitset</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">force_to_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">tmp_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">to_unit</span><span class="o">=</span><span class="n">force_to_unit</span><span class="p">)</span>
+            <span class="n">tmp_unit</span> <span class="o">=</span> <span class="n">force_to_unit</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tmp_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">to_unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+            <span class="n">tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+
+        <span class="k">if</span> <span class="n">tmp_value</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">pluralize</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="n">pluralize</span><span class="p">:</span>
+            <span class="n">name_format_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;L&#39;</span><span class="p">)</span>
+
+        <span class="n">tmp_value_str</span> <span class="o">=</span> <span class="n">text_number_formatter</span><span class="p">(</span><span class="n">tmp_value</span><span class="p">,</span> <span class="n">format_spec</span><span class="o">=</span><span class="n">number_format</span><span class="p">)</span>
+
+        <span class="n">tmp_unit_format</span> <span class="o">=</span> <span class="s">&#39;{:&#39;</span><span class="o">+</span><span class="s">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name_format_list</span><span class="p">)</span><span class="o">+</span><span class="s">&#39;}&#39;</span>
+        <span class="n">tmp_unit_str</span> <span class="o">=</span> <span class="n">tmp_unit_format</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unit_manager</span><span class="p">[</span><span class="n">tmp_unit</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">include_suffix</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">tmp_suffix_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tmp_suffix_str</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+        <span class="k">return</span> <span class="n">tmp_value_str</span><span class="o">+</span><span class="s">&quot; &quot;</span><span class="o">+</span><span class="n">tmp_unit_str</span><span class="o">+</span><span class="n">tmp_suffix_str</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_str</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">item</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aliases</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> is not a valid method or unit&#39;</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span>
+
+    <span class="c"># Comparison Magic Methods</span>
+
+    <span class="k">def</span> <span class="nf">_get_storage_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_obj</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">conv_numeric</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">in_obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">in_obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tmp_val</span> <span class="o">=</span> <span class="n">Decimal</span><span class="p">(</span><span class="n">in_obj</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">InvalidOperation</span><span class="p">:</span>
+            <span class="n">tmp_val</span><span class="p">,</span> <span class="n">tmp_unit</span><span class="p">,</span> <span class="n">tmp_suffix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">in_obj</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">tmp_val</span><span class="p">,</span> <span class="n">from_unit</span><span class="o">=</span><span class="n">tmp_unit</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">conv_numeric</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">tmp_val</span><span class="p">,</span> <span class="n">from_unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">tmp_val</span>
+
+    <span class="k">def</span> <span class="nf">_comp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_storage_value</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comp</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__neq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comp</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comp</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comp</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comp</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comp</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+
+    <span class="c"># Math Methods</span>
+
+    <span class="k">def</span> <span class="nf">__round__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">tmp_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">tmp_num</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__floor__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tmp_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">tmp_num</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__ceil__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tmp_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">tmp_num</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__trunc__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tmp_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">trunc</span><span class="p">(</span><span class="n">tmp_num</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_math_helper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">as_value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">ret_class</span> <span class="o">=</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">operation</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;add&#39;</span><span class="p">,</span> <span class="s">&#39;sub&#39;</span><span class="p">]:</span>
+            <span class="n">other_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_storage_value</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">other_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_storage_value</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">conv_numeric</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;add&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">+</span> <span class="n">other_value</span>
+        <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;sub&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">-</span> <span class="n">other_value</span>
+
+        <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;mul&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">*</span> <span class="n">other_value</span>
+        <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;floordiv&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">//</span> <span class="n">other_value</span>
+        <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;div&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">/</span> <span class="n">other_value</span>
+        <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;mod&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">%</span> <span class="n">other_value</span>
+        <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;pow&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">**</span> <span class="n">other_value</span>
+        <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;lshift&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">other_value</span>
+        <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;rshift&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">other_value</span>
+        <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;and&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">%</span> <span class="n">other_value</span>
+        <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;or&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">|</span> <span class="n">other_value</span>
+        <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s">&#39;xor&#39;</span><span class="p">:</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">)</span> <span class="o">^</span> <span class="n">other_value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&#39;Invalid operaion: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">operation</span><span class="p">)</span>
+
+        <span class="n">new_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">new_value</span><span class="p">,</span> <span class="n">to_unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ret_class</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">as_value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">new_value</span><span class="p">,</span>
+                <span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span>
+                <span class="n">suffix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">suffix</span><span class="p">,</span>
+                <span class="c"># default_unit=self._default_unit,</span>
+                <span class="n">storage_unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_unit</span><span class="p">,</span>
+                <span class="n">unitset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">unitset</span><span class="p">,</span>
+                <span class="n">unit_manager</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_unit_manager</span><span class="p">,</span>
+                <span class="n">calculator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_calculator</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">new_value</span>
+
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;add&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__add__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iadd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;add&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+    <span class="c"># --------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;sub&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sub__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__isub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;sub&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+    <span class="c"># --------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;mul&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__mul__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__imul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;mul&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c"># --------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">__floordiv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;floordiv&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rfloordiv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__floordiv__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__ifloordiv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;floordiv&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c"># --------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">__div__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;div&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rdiv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__div__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__idiv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;div&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c"># --------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">__mod__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;mod&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rmod__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__mod__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__imod__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;mod&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c"># --------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">__pow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;pow&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rpow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pow__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__ipow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;pow&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c"># --------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">__lshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;lshift&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rlshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__lshift__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__ilshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;lshift&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c"># --------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">__rshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;rshift&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rrshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__rshift__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__irshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;rshift&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c"># --------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">__and__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;and&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rand__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__and__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iand__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;and&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c"># --------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">__or__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;or&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__ror__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__or__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__ior__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;or&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c"># --------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">__xor__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;xor&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rxor__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__xor__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__ixor__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_helper</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s">&#39;xor&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c"># Conversion Methods</span>
+
+    <span class="k">def</span> <span class="nf">__int__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__float__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__long__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__complex__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">complex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__oct__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">oct</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__hex__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tmp_msg</span> <span class="o">=</span> <span class="s">&#39;DataBytesHelper: &#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">get_str</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">tmp_msg</span></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Dan Strohl.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.9',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

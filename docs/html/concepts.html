@@ -1,0 +1,245 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Data Size Concepts &mdash; Data Size Helper 0.9 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Data Size Helper 0.9 documentation" href="index.html"/>
+        <link rel="prev" title="Data Size Helper String Formatting" href="data_size_helper_formatting.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> Data Size Helper
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="data_helper.html">Data Size Helper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_size_calculator.html">Data Size Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_unit_manager.html">Data Unit Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_size_helper_formatting.html">Data Size Helper String Formatting</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Data Size Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#unitsets">UNITSETS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#differences">Differences</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Data Size Helper</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Data Size Concepts</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/concepts.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="data-size-concepts">
+<h1>Data Size Concepts<a class="headerlink" href="#data-size-concepts" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="unitsets">
+<h2>UNITSETS<a class="headerlink" href="#unitsets" title="Permalink to this headline">¶</a></h2>
+<p>Unitsets are a key concept for the data size helper, these define how the system handles normalization and string
+output.</p>
+<dl class="docutils">
+<dt>Unitsets determine:</dt>
+<dd><ul class="first last simple">
+<li>If the system is using decimal or binary math.</li>
+<li>If the system is assuming bits or bytes.</li>
+</ul>
+</dd>
+</dl>
+<p>There are four unitsets used in the DataSizeHelper classes:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="44%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&nbsp;</th>
+<th class="head">BYTES</th>
+<th class="head">BITS</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>DECIMAL</td>
+<td>DECIMAL-BYTES
+- example: Megabytes</td>
+<td>DECIMAL-BITS
+- example: Gigabits</td>
+</tr>
+<tr class="row-odd"><td>BINARY</td>
+<td>BINARY-BYTES
+- example: Mibibytes</td>
+<td>BINARY-BITS
+- example: Kibibits</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="differences">
+<h3>Differences<a class="headerlink" href="#differences" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Each Byte is 8 bits, this does not matter if converting from bytes to bytes, or bits to bits, but keep it in
+mind when going from bits to bytes or vice-versa.</li>
+<li>When using DECIMAL units, the units use base-10 math, so each unit size is 1000 times the last one.</li>
+<li>When using BINARY units, the units use base-2 math, so each unit size is 1024 times the last one.</li>
+</ul>
+</div>
+<div class="section" id="references">
+<h3>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://en.wikipedia.org/wiki/Units_of_information">https://en.wikipedia.org/wiki/Units_of_information</a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="data_size_helper_formatting.html" class="btn btn-neutral" title="Data Size Helper String Formatting" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Dan Strohl.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.9',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

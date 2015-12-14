@@ -1,14 +1,15 @@
+__author__ = 'Dan Strohl'
 
 class StartsEndsWith(object):
-
-    """
-    checks to see if 'foobar' starts or ends with any of the passed items:
-        ['foo', 'bar', 'blah', 'duh']
-        returns 'foo' in this case.
-    raises
-    """
-
     def __init__(self, prefixes=None, suffixes=None, case_insensitive=False):
+        """
+        :param prefixes: List of possible prefixes
+        :type prefixes: list
+        :param suffixes: List of possible suffixes
+        :type suffixes: list
+        :param case_insensitive: If True, will compare prefix/suffix's ignoring case.
+        :type case_insensitive: bool
+        """
         self.case_insensitive = case_insensitive
 
         self._prefix_term_dict = {}
@@ -51,13 +52,39 @@ class StartsEndsWith(object):
         size_list.sort(reverse=True)
 
     def prefix(self, term):
+        """
+        Checks for any matching prefixes for the term.
+        :param term: String term to check for prefixes
+        :type term: str
+        :return: returns (prefix, remaining_term)
+        :rtype: tuple
+        """
         return self._check_term(term, prefix=True)
 
     def suffix(self, term):
+        """
+        Checks for any matching suffixes for the term.
+        :param term: String term to check for suffixes
+        :type term: str
+        :return: returns (suffix, remaining_term)
+        :rtype: tuple
+        """
         suffix, ret_term = self._check_term(term, prefix=False)
         return ret_term, suffix
 
     def check(self, term, allow_overlap=False, prefix_priority=True):
+        """
+        Checks for any matching prefixes and suffixes in the term
+        :param term: String term to check
+        :type term: str
+        :param allow_overlap: IF True, will return prefixes and suffixes even if they overlap, if false, will check
+            the priority (see prefix_priority) first, then check the remaining term for the suffix.
+        :type allow_overlap: bool
+        :param prefix_priority: If True, checks the prefix first, then the suffix, if False, does the inverse.
+        :type prefix_priority: bool
+        :return: returns (prefix, term, suffix)
+        :rtype: tuple
+        """
 
         if prefix_priority:
             prefix, ret_term = self._check_term(term, prefix=True)

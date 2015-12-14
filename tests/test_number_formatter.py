@@ -4,51 +4,6 @@ from number_formatter import *
 
 tnf = text_number_formatter
 
-class TestSplitNumbers(unittest.TestCase):
-
-    def test_basic_1(self):
-        test_in = '1234abcd'
-        test_out_num, test_out_str = split_numbers(test_in)
-        self.assertEqual('1234', test_out_num)
-        self.assertEqual('abcd', test_out_str)
-
-    def test_basic_2(self):
-        test_in = 'abcd'
-        test_out_num, test_out_str = split_numbers(test_in)
-        self.assertEqual('', test_out_num)
-        self.assertEqual('abcd', test_out_str)
-
-    def test_basic_3(self):
-        test_in = 'abcd1234'
-        test_out_num, test_out_str = split_numbers(test_in, from_right=True)
-        self.assertEqual('1234', test_out_num)
-        self.assertEqual('abcd', test_out_str)
-
-    def test_basic_4(self):
-        test_in = '1a3b5c5'
-        test_out_num, test_out_str = split_numbers(test_in)
-        self.assertEqual('1', test_out_num)
-        self.assertEqual('a3b5c5', test_out_str)
-
-    def test_basic_5(self):
-        test_in = '1345.245abc'
-        test_out_num, test_out_str = split_numbers(test_in)
-        self.assertEqual('1345', test_out_num)
-        self.assertEqual('.245abc', test_out_str)
-
-    def test_basic_5b(self):
-        test_in = '1345.245abc'
-        test_out_num, test_out_str = split_numbers(test_in, include='.')
-        self.assertEqual('1345.245', test_out_num)
-        self.assertEqual('abc', test_out_str)
-
-    def test_basic_6(self):
-        test_in = '1,234,566'
-        test_out_num, test_out_str = split_numbers(test_in, include=',')
-        self.assertEqual('1,234,566', test_out_num)
-        self.assertEqual('', test_out_str)
-
-
 class TestGroupGen(unittest.TestCase):
 
     def test_group(self):
